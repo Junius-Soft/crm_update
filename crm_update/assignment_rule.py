@@ -50,6 +50,10 @@ def _normalize_assign_condition(condition, meta):
             field = _get_doctype_field(meta, condition[1])
             if field and field.fieldtype in NUMERIC_FIELD_TYPES and isinstance(condition[3], str):
                 condition[3] = _convert_numeric_string(condition[3], field.fieldtype)
+        elif len(condition) == 3 and isinstance(condition[0], str) and isinstance(condition[2], str):
+            field = _get_doctype_field(meta, condition[0])
+            if field and field.fieldtype in NUMERIC_FIELD_TYPES:
+                condition[2] = _convert_numeric_string(condition[2], field.fieldtype)
         return [_normalize_assign_condition(item, meta) for item in condition]
 
     return condition
