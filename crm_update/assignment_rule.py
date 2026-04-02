@@ -3,58 +3,34 @@ from __future__ import annotations
 import frappe
 from frappe.utils.data import cint, flt
 
-NUMERIC_FIELD_TYPES = {"Int", "Float", "Currency", "Percent", "Rating"}
 
-
-def _convert_numeric_string(value: str, fieldtype: str):
-    if not isinstance(value, str):
-        return value
-
-    try:
-        if fieldtype in {"Float", "Currency", "Percent"} or "." in value:
-            return flt(value)
-        return cint(value)
-    except (ValueError, TypeError):
-        return value
-
-
-def _normalize_condition_value(value, fieldtype=None):
-    if isinstance(value, str) and fieldtype in NUMERIC_FIELD_TYPES:
-        return _convert_numeric_string(value, fieldtype)
+def _normalize_condition_value(value):
+    if isinstance(value, str):
+        try:
+            if "." in value:
+                return flt(value)
+            return cint(value)
+        except (ValueError, TypeError):
+            return value
     return value
 
 
-def _get_doctype_field(meta, fieldname: str):
-    if not fieldname or not meta:
-        return None
-    return meta.get_field(fieldname)
-
-
-def _normalize_assign_condition(condition, meta):
+def _normalize_assign_condition(condition):
     if isinstance(condition, dict):
         normalized = {}
         for key, value in condition.items():
             if key in {"value", "value1", "value2"}:
-                fieldname = condition.get("field") or condition.get("fieldname") or condition.get("docfield")
-                field = _get_doctype_field(meta, fieldname)
-                if field and field.fieldtype in NUMERIC_FIELD_TYPES:
-                    normalized[key] = _convert_numeric_string(value, field.fieldtype)
-                else:
-                    normalized[key] = _normalize_assign_condition(value, meta)
+                normalized[key] = _normalize_condition_value(value)
             else:
-                normalized[key] = _normalize_assign_condition(value, meta)
+                normalized[key] = _normalize_assign_condition(value)
         return normalized
 
     if isinstance(condition, list):
         if len(condition) >= 4 and isinstance(condition[1], str):
-            field = _get_doctype_field(meta, condition[1])
-            if field and field.fieldtype in NUMERIC_FIELD_TYPES and isinstance(condition[3], str):
-                condition[3] = _convert_numeric_string(condition[3], field.fieldtype)
-        elif len(condition) == 3 and isinstance(condition[0], str) and isinstance(condition[2], str):
-            field = _get_doctype_field(meta, condition[0])
-            if field and field.fieldtype in NUMERIC_FIELD_TYPES:
-                condition[2] = _convert_numeric_string(condition[2], field.fieldtype)
-        return [_normalize_assign_condition(item, meta) for item in condition]
+            condition[3] = _normalize_condition_value(condition[3])
+        elif len(condition) == 3 and isinstance(condition[0], str):
+            condition[2] = _normalize_condition_value(condition[2])
+        return [_normalize_assign_condition(item) for item in condition]
 
     return condition
 
@@ -91,5 +67,5 @@ def normalize_assignment_rule_conditions(doc, method=None):
     except Exception:
         meta = None
 
-    normalized = _normalize_assign_condition(assign_condition, meta)
+    normalized = _normalize_assign_condition(assign_condition)
     doc.assign_condition = frappe.as_json(normalized)
