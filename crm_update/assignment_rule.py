@@ -67,9 +67,12 @@ def normalize_assignment_rule_conditions(doc, method=None):
         try:
             assign_condition = frappe.parse_json(assign_condition)
         except (ValueError, TypeError):
-            return
+            try:
+                assign_condition = frappe.safe_eval(assign_condition)
+            except (ValueError, SyntaxError, TypeError):
+                return
 
-    doctype_name = doc.get("document_type") or doc.get("reference_doctype") or doc.get("document_type")
+    doctype_name = doc.get("document_type") or doc.get("reference_doctype")
     if not doctype_name:
         return
 
