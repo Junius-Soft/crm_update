@@ -30,7 +30,7 @@ app_license = "mit"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/crm_update/css/crm_update.css"
-# web_include_js = "/assets/crm_update/js/crm_update.js"
+web_include_js = "/assets/crm_update/js/crm_update.js"
 
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "crm_update/public/scss/website"
@@ -246,4 +246,10 @@ app_license = "mit"
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
+
+doc_events = {
+	"Assignment Rule": {
+		"before_save": "crm_update.assignment_rule.normalize_assignment_rule_conditions"
+	}
+}
 
