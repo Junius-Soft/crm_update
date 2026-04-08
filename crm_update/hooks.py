@@ -238,18 +238,76 @@ web_include_js = "/assets/crm_update/js/crm_update.js"
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True
 
-# default_log_clearing_doctypes = {
-# 	"Logging DocType Name": 30  # days to retain logs
-# }
+from . import __version__ as app_version
 
-# Translation
-# ------------
-# List of apps whose translatable strings should be excluded from this app's translations.
-# ignore_translatable_strings_from = []
+app_name = "crm_update"
+app_title = "CRM Update"
+app_publisher = "MSTFRS"
+app_description = "CRM Updates"
+app_license = "MIT"
 
 doc_events = {
 	"Assignment Rule": {
 		"before_save": "crm_update.assignment_rule.normalize_assignment_rule_conditions"
-	}
+	},
+    "Territory": {
+        "after_insert": "crm_update.update_territory_handler.sync_territory",
+        "on_update": "crm_update.update_territory_handler.sync_territory",
+        "after_delete": "crm_update.update_territory_handler.sync_territory"
+    },
+    "CRM Territory": {
+        "after_insert": "crm_update.update_territory_handler.sync_territory",
+        "on_update": "crm_update.update_territory_handler.sync_territory",
+        "after_delete": "crm_update.update_territory_handler.sync_territory"
+    },
+	"Industry Type": {
+    "after_insert": "crm_update.update_industry_handler.sync_industry",
+    "after_update": "crm_update.update_industry_handler.sync_industry",
+    "after_delete": "crm_update.update_industry_handler.sync_industry"
+},
+"CRM Industry": {
+    "after_insert": "crm_update.update_industry_handler.sync_industry",
+    "after_update": "crm_update.update_industry_handler.sync_industry",
+    "after_delete": "crm_update.update_industry_handler.sync_industry"
+},
+	#"Customer": {
+	#	"before_save": "crm_update.custom_deal_handler.update_customer_crm_lead"
+	#}
+}
+from crm_update.sales_hierarchy import CRM_DOCTYPES
+
+permission_query_conditions = {}
+
+for dt in CRM_DOCTYPES:
+    permission_query_conditions = {
+        "CRM Lead": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        "CRM Deal": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        "CRM Note": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        "CRM Task": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        "CRM Call Log": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        "CRM Organization": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        "CRM Contact": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        # KRİTİK EKLEMELER:
+        "FCRM Note": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        "FCRM Task": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        "FCRM Lead": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        "FCRM Deal": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        "FCRM Call Log": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        "FCRM Organization": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        "FCRM Contact": "crm_update.sales_hierarchy.get_permission_query_conditions",
+        
+
 }
 
+
+doc_events = {
+    "Sales Person": {
+        "on_update": "crm_update.sales_hierarchy.clear_sales_cache"
+    },
+"CRM Note": {
+        "before_query": "crm_update.sales_hierarchy.crm_filter_query"
+    },
+    "CRM Task": {
+        "before_query": "crm_update.sales_hierarchy.crm_filter_query"
+    }
+}
